@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rover Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50%; /* Making buttons round */
+            background-color: #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 24px; /* Adjusting for icons */
+        }
+
+        button:hover {
+            background-color: #555;
+            color: white;
+        }
+
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            justify-items: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        #panTiltControls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            justify-items: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        #modeToggle {
+            background-color: #2196F3;
+            color: white;
+            border-radius: 5px;
+        }
+
+        #modeToggle.autonomous {
+            background-color: #FF5722;
+        }
+    </style>
+</head>
+<body>
+<h1>Rover Camera Feed</h1>
+<img src="/video_feed" width="640" height="480" />
+<p id="frontDistance">Front Distance: N/A</p>
+<p id="backDistance">Back Distance: N/A</p>
+
+<h2>Camera Controls</h2>
+<div id="panTiltControls">
+    <button onclick="sendCommand('pan_left')"><i class="fas fa-arrow-left"></i></button>
+    <button onclick="sendCommand('tilt_up')"><i class="fas fa-arrow-up"></i></button>
+    <button onclick="sendCommand('pan_right')"><i class="fas fa-arrow-right"></i></button>
+    <div></div>
+    <button onclick="sendCommand('tilt_down')"><i class="fas fa-arrow-down"></i></button>
+</div>
+
+<h2>Rover Controls</h2>
+<div id="controls">
+    <button onclick="sendCommand('left')"><i class="fas fa-arrow-left"></i></button>
+    <button onclick="sendCommand('forward')"><i class="fas fa-arrow-up"></i></button>
+    <button onclick="sendCommand('right')"><i class="fas fa-arrow-right"></i></button>
+    <div></div>
+    <button onclick="sendCommand('backward')"><i class="fas fa-arrow-down"></i></button>
+    <button onclick="sendCommand('stop')">Stop</button>
+</div>
+
+
+<button id="modeToggle" onclick="toggleMode()">Switch to Autonomous</button>
+    <script>
+       let isAutonomous = false;
+
+        function sendCommand(action) {
+    if (!isAutonomous) { // Only send manual commands when not in autonomous mode
+        $.ajax({
+            url: `/command/${action}`,
+            method: 'GET',
+            success: function () {
+                console.log(`Command ${action} sent successfully`);
+            },
+            error: function () {
+                console.error(`Failed to send command ${action}`);
+            }
+        });
+    }
+}
+        function toggleMode() {
+    isAutonomous = !isAutonomous;
+    const button = document.getElementById('modeToggle');
+    
+    if (isAutonomous) {
+        button.textContent = 'Switch to Manual';
+        button.classList.add('autonomous');
+
+        // Send command to switch rover to autonomous mode
+        $.ajax({
+            url: '/mode/autonomous',
+            method: 'GET',
+            success: function () {
+                console.log("Switched to Autonomous mode");
+            },
+            error: function () {
+                console.error("Failed to switch to Autonomous mode");
+            }
+        });
+
+    } else {
+        button.textContent = 'Switch to Autonomous';
+        button.classList.remove('autonomous');
+
+        // Send command to switch rover back to manual mode
+        $.ajax({
+            url: '/mode/manual',
+            method: 'GET',
+            success: function () {
+                console.log("Switched to Manual mode");
+            },
+            error: function () {
+                console.error("Failed to switch to Manual mode");
+            }
+        });
+    }
+}
+function updateDistances() {
+    if (!isAutonomous) { 
+        $.get('/distance/front', function(data) {
+            document.getElementById("frontDistance").innerText = `Front Distance: ${data} cm`;
+        });
+        $.get('/distance/back', function(data) {
+            document.getElementById("backDistance").innerText = `Back Distance: ${data} cm`;
+        });
+    }
+    setTimeout(updateDistances, 1000);  // Update every second
+}
+
+// Initiate the distance updates when the document is ready
+$(document).ready(function() {
+    updateDistances();
+});
+
+    </script>    
+</body>
+</html>
