@@ -23,7 +23,7 @@ The Remote Access Rover is a Raspberry Pi-powered robotic vehicle that can be co
 
 
 ## Usage
-1. Start the Flask app with `python remote_access_control.py`.
+1. Start the Flask app with `python car32.py`.
 2. Access the web interface in your browser.
 3. Use the interface to control the rover or switch to autonomous mode.
 
